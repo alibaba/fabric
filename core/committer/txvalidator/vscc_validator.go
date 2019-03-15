@@ -343,13 +343,31 @@ func (v *VsccValidatorImpl) GetInfoForValidate(chdr *common.ChannelHeader, ccID 
 		cc.ChaincodeVersion = cd.CCVersion()
 		vscc.ChaincodeName, policy = cd.Validation()
 	} else {
-		// when we are validating a system CC, we use the default
-		// VSCC and a default policy that requires one signature
-		// from any of the members of the channel
-		p := cauthdsl.SignedByAnyMember(v.support.GetMSPIDs(chdr.ChannelId))
-		policy, err = utils.Marshal(p)
-		if err != nil {
-			return nil, nil, nil, err
+		// use specific policy for system CC cmscc
+		if ccID == "cmscc" {
+			qe, err := v.support.Ledger().NewQueryExecutor()
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			defer qe.Done()
+			policy, err = qe.GetState(ccID, "endorsement_policy")
+			if err != nil || policy == nil {
+				logger.Warningf("Get endorsement_policy from iscc ledger failed, fallback to default policy. err: %s", err)
+				p := cauthdsl.SignedByMajorityPeer(v.support.GetMSPIDs(chdr.ChannelId))
+				policy, err = utils.Marshal(p)
+				if err != nil {
+					return nil, nil, nil, err
+				}
+			}
+		} else {
+			// when we are validating a system CC, we use the default
+			// VSCC and a default policy that requires one signature
+			// from any of the members of the channel
+			p := cauthdsl.SignedByAnyMember(v.support.GetMSPIDs(chdr.ChannelId))
+			policy, err = utils.Marshal(p)
+			if err != nil {
+				return nil, nil, nil, err
+			}
 		}
 	}
 

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+
+option go_package = "github.com/hyperledger/fabric/core/scc/cmscc";
+option java_package = "org.hyperledger.fabric.core.scc.cmscc";
+
+package cmscc;
+
+enum PatchMode {
+    PATCH     = 0;
+    OVERWRITE = 1;
+    DELETE    = 2;
+}
+
+message Proposal {
+    string description = 1;
+    bytes config = 2;
+    bytes config_update = 3;
+    map<string, bytes> signatures = 4;
+}

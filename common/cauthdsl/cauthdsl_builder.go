@@ -19,6 +19,8 @@ package cauthdsl
 import (
 	"sort"
 
+	"math"
+
 	"github.com/golang/protobuf/proto"
 	cb "github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/msp"
@@ -152,6 +154,37 @@ func signedByAnyOfGivenRole(role msp.MSPRole_MSPRoleType, ids []string) *cb.Sign
 	}
 
 	return p
+}
+
+func signedByMajorityOfGivenRole(role msp.MSPRole_MSPRoleType, ids []string) *cb.SignaturePolicyEnvelope {
+	// we create an array of principals, one principal
+	// per application MSP defined on this chain
+	sort.Strings(ids)
+	principals := make([]*msp.MSPPrincipal, len(ids))
+	sigspolicy := make([]*cb.SignaturePolicy, len(ids))
+	for i, id := range ids {
+		principals[i] = &msp.MSPPrincipal{
+			PrincipalClassification: msp.MSPPrincipal_ROLE,
+			Principal:               utils.MarshalOrPanic(&msp.MSPRole{Role: role, MspIdentifier: id})}
+		sigspolicy[i] = SignedBy(int32(i))
+	}
+
+	m := math.Ceil(float64(len(ids)) / 2)
+	if len(ids)%2 == 0 {
+		m += 1
+	}
+	// create the policy: it requires all signature from the principals
+	p := &cb.SignaturePolicyEnvelope{
+		Version:    0,
+		Rule:       NOutOf(int32(m), sigspolicy),
+		Identities: principals,
+	}
+
+	return p
+}
+
+func SignedByMajorityPeer(ids []string) *cb.SignaturePolicyEnvelope {
+	return signedByMajorityOfGivenRole(msp.MSPRole_PEER, ids)
 }
 
 // SignedByAnyMember returns a policy that requires one valid

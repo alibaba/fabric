@@ -523,6 +523,7 @@ chaincode:
         escc: enable
         vscc: enable
         qscc: enable
+        cmscc: enable
 
     # System chaincode plugins:
     # System chaincodes can be loaded as shared objects compiled as Go plugins.

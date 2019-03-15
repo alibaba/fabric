@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+import "common/common.proto";
+import "common/configtx.proto";
+
+option go_package = "github.com/hyperledger/fabric/protos/common";
+option java_package = "org.hyperledger.fabric.protos.common";
+
+package common;
+
+enum PatchMode {
+    PATCH     = 0;
+    OVERWRITE = 1;
+    DELETE    = 2;
+}
+
+message InteroperabilityProposal {
+    ConfigGroup proposal = 1;
+    string description = 2;
+    bytes configupdate_to_sign = 3;
+    map<string, ConfigSignature> signatures = 4;
+    string simulation_result = 5;
+    Envelope envelope_to_submit = 6;
+}
